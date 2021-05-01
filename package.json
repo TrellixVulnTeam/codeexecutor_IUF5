@@ -1,0 +1,19 @@
+{
+  "name": "codeexecuter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "node main.js"
+  },
+  "author": "InimicalPart",
+  "license": "ISC",
+  "dependencies": {
+    "child_process": "latest",
+    "discord.js": "^12.4.1",
+    "dotenv": "^8.2.0",
+    "eslint": "^7.13.0",
+    "pretty-ms": "latest",
+    "express": "^4.17.1"
+  }
+}
