@@ -1,4 +1,3 @@
-const prettyMilliseconds = require("pretty-ms");
 let os = require("os");
 const botOwner = 301062520679170066;
 const Discord = require("discord.js");
@@ -13,12 +12,6 @@ const { spawn } = require("child_process");
 function between(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
-const search = os.userInfo().username;
-const search2 = "\\.\\./";
-const search3 = "\\.\\.\\\\";
-const replacer = new RegExp(search, "g");
-const replacer2 = new RegExp(search2, "g");
-const replacer3 = new RegExp(search3, "g");
 client.once("ready", () => {
   console.log(
     "Bot '" +
@@ -27,37 +20,13 @@ client.once("ready", () => {
       client.user.discriminator +
       "' is ready!"
   );
-  let activityRandom = between(1, 6);
+  let activityRandom = between(1, 3);
   if (activityRandom == 1) {
-    client.user.setPresence({
-      activity: { name: "with Python", type: "PLAYING" },
-      status: "online",
-    });
+    client.user.setActivity("with Python", { type: "PLAYING" });
   } else if (activityRandom == 2) {
-    client.user.setPresence({
-      activity: { name: "with Node.JS", type: "PLAYING" },
-      status: "online",
-    });
+    client.user.setActivity("with Node.JS", { type: "PLAYING" });
   } else if (activityRandom == 3) {
-    client.user.setPresence({
-      activity: { name: "with GO", type: "PLAYING" },
-      status: "online",
-    });
-  } else if (activityRandom == 4) {
-    client.user.setPresence({
-      activity: { name: "with Bash", type: "PLAYING" },
-      status: "online",
-    });
-  } else if (activityRandom == 5) {
-    client.user.setPresence({
-      activity: { name: "with Batch", type: "PLAYING" },
-      status: "online",
-    });
-  } else if (activityRandom == 6) {
-    client.user.setPresence({
-      activity: { name: "with Lua", type: "PLAYING" },
-      status: "online",
-    });
+    client.user.setActivity("with GO", { type: "PLAYING" });
   }
 
   if (fs.existsSync("externalfiles/main.py")) {
@@ -73,26 +42,6 @@ client.once("ready", () => {
   if (fs.existsSync("externalfiles/main.go")) {
     fs.unlink("externalfiles/main.go", function (err) {
       if (err) console.log("main.go doesn't exist");
-    });
-  }
-  if (fs.existsSync("externalfiles/main.bat")) {
-    fs.unlink("externalfiles/main.bat", function (err) {
-      if (err) console.log("main.bat doesn't exist");
-    });
-  }
-  if (fs.existsSync("externalfiles/main.sh")) {
-    fs.unlink("externalfiles/main.sh", function (err) {
-      if (err) console.log("main.sh doesn't exist");
-    });
-  }
-  if (fs.existsSync("externalfiles/main.lua")) {
-    fs.unlink("externalfiles/main.lua", function (err) {
-      if (err) console.log("main.lua doesn't exist");
-    });
-  }
-  if (fs.existsSync("externalfiles/versions.bat")) {
-    fs.unlink("externalfiles/versions.bat", function (err) {
-      if (err) console.log("versions.bat doesn't exist");
     });
   }
 });
@@ -116,17 +65,15 @@ client.on("message", (message) => {
   const args = message.content.slice(prefix.length).trim().split(" ");
   const command = args.shift().toLowerCase();
   console.log("Message by: " + message.author + " content: " + message.content);
-
-  if (command === "[uptime]") {
+  if (message.content === "up?") {
     if (maintenance) {
       working();
       return;
     }
     console.log("Up? command triggered.");
+    const prettyMilliseconds = require("pretty-ms");
     message.channel.send(
-      client.user.username +
-        " has been up for: " +
-        prettyMilliseconds(client.uptime)
+      "Yes! I've been up for: " + prettyMilliseconds(client.uptime)
     );
   }
 
@@ -172,6 +119,44 @@ client.on("message", (message) => {
       message.channel.send("File doesn't exist.");
     }
   }
+  if (command === "[langinfo]") {
+    if (maintenance) {
+      working();
+      return;
+    }
+    message.channel.send(
+      "Getting version information...\n--------------------------"
+    );
+    var dataToSendP;
+    var dataToSendN;
+    var dataToSendG;
+    const goversion = spawn("go", ["version"], defaults);
+
+    goversion.stdout.on("data", function (data) {
+      dataToSendG = data.toString().split(" ");
+    });
+    goversion.on("close", (code) => {
+      message.channel.send("Go: " + dataToSendG[2]);
+    });
+
+    const nodeversion = spawn("node", ["-v"], defaults);
+    nodeversion.stdout.on("data", function (data) {
+      dataToSendN = data.toString();
+    });
+    nodeversion.on("close", (code) => {
+      message.channel.send("Node.JS: " + dataToSendN);
+    });
+
+    const pythonversion = spawn("python", ["--version"], defaults);
+    pythonversion.stdout.on("data", function (data) {
+      dataToSendP = data.toString();
+    });
+    pythonversion.on("close", (code) => {
+      if (dataToSendP != undefined) {
+        message.channel.send("Python: " + dataToSendP);
+      }
+    });
+  }
   if (command === "[gocheck]") {
     if (maintenance) {
       working();
@@ -193,230 +178,6 @@ client.on("message", (message) => {
       message.channel.send("File doesn't exist.");
     }
   }
-  if (command === "[bashcheck]") {
-    if (maintenance) {
-      working();
-      return;
-    }
-    console.log("Sending main.sh");
-    try {
-      var stats = fs.statSync("externalfiles/main.sh");
-      var fileSizeInBytes = stats.size;
-      var fileSizeInMegabytes = fileSizeInBytes / (1024 * 1024);
-      if (fileSizeInMegabytes > 8) {
-        message.channel.send("File size exceeds 8 MB.");
-      } else {
-        message.channel.send("", {
-          files: ["./externalfiles/main.sh"],
-        });
-      }
-    } catch (err) {
-      message.channel.send("File doesn't exist.");
-    }
-  }
-  if (command === "[batchcheck]") {
-    if (maintenance) {
-      working();
-      return;
-    }
-    console.log("Sending main.bat");
-    try {
-      var stats = fs.statSync("externalfiles/main.bat");
-      var fileSizeInBytes = stats.size;
-      var fileSizeInMegabytes = fileSizeInBytes / (1024 * 1024);
-      if (fileSizeInMegabytes > 8) {
-        message.channel.send("File size exceeds 8 MB.");
-      } else {
-        message.channel.send("", {
-          files: ["./externalfiles/main.bat"],
-        });
-      }
-    } catch (err) {
-      message.channel.send("File doesn't exist.");
-    }
-  }
-  if (command === "[luacheck]") {
-    if (maintenance) {
-      working();
-      return;
-    }
-    console.log("Sending main.lua");
-    try {
-      var stats = fs.statSync("externalfiles/main.lua");
-      var fileSizeInBytes = stats.size;
-      var fileSizeInMegabytes = fileSizeInBytes / (1024 * 1024);
-      if (fileSizeInMegabytes > 8) {
-        message.channel.send("File size exceeds 8 MB.");
-      } else {
-        message.channel.send("", {
-          files: ["./externalfiles/main.lua"],
-        });
-      }
-    } catch (err) {
-      message.channel.send("File doesn't exist.");
-    }
-  }
-  if (command === "[versions]") {
-    if (maintenance) {
-      working();
-      return;
-    }
-    message.channel.send("Getting versions...\n--------------------------");
-    var dataToSendP;
-    var dataToSendN;
-    var dataToSendG;
-    var dataToSendB;
-    var dataToSendL;
-    var dataToSendBa;
-    const luaversion = spawn("lua", ["-v"], defaults);
-    luaversion.stdout.on("data", function (data) {
-      dataToSendL = data.toString().split(" ")[1];
-    });
-    luaversion.on("close", (code) => {
-      const bashversion = spawn("bash", ["--version"], defaults);
-      bashversion.stdout.on("data", function (data) {
-        dataToSendB = data.toString().split("\n")[0].split(" ")[3];
-      });
-      bashversion.on("close", (code) => {
-        const goversion = spawn("go", ["version"], defaults);
-        goversion.stdout.on("data", function (data) {
-          dataToSendG = data.toString().split(" ");
-        });
-        goversion.on("close", (code) => {
-          const nodeversion = spawn("node", ["-v"], defaults);
-          nodeversion.stdout.on("data", function (data) {
-            dataToSendN = data.toString();
-          });
-          nodeversion.on("close", (code) => {
-            const pythonversion = spawn("python", ["--version"], defaults);
-            pythonversion.stdout.on("data", function (data) {
-              dataToSendP = data.toString().split(" ")[1];
-            });
-            pythonversion.on("close", (code) => {
-              if (dataToSendP != undefined) {
-                const batchversion = spawn("cmd", ["/c", "ver"], defaults);
-                batchversion.stdout.on("data", function (data) {
-                  dataToSendBa = data.toString().replace("]", "").split(" ")[3];
-                });
-                batchversion.on("close", (code) => {
-                  message.channel.send(
-                    "Lua: " +
-                      dataToSendL +
-                      "\nBash: " +
-                      dataToSendB +
-                      "\nGo: " +
-                      dataToSendG[2] +
-                      "\nNode.JS: " +
-                      dataToSendN +
-                      "Python: " +
-                      dataToSendP +
-                      "Batch: " +
-                      dataToSendBa
-                  );
-                });
-              }
-            });
-          });
-        });
-      });
-    });
-  }
-
-  if (command === "[batch]") {
-    if (maintenance) {
-      working();
-      return;
-    }
-    console.log("Batch command triggered.");
-    if (!args.length) {
-      return message.channel.send(
-        "[batch]\n\nCommand [batch] executes BATCH code and sends back both output and errors to the discord channel.\nExample:\n\n`[batch] echo hello`\n\nOutput:\nhello"
-      );
-    }
-    const batchcode = args
-      .slice(0)
-      .join(" ")
-      .replace(replacer2, "")
-      .replace(replacer3, "")
-      .replace(/\\CodeExecuter/g, "")
-      .replace(/\/CodeExecuter/g, "")
-      .replace(/cd/g, "");
-    fs.writeFileSync(
-      "externalfiles/main.bat",
-      batchcode,
-      function (err, result) {
-        if (err) console.log("error", err);
-      }
-    );
-    message.channel.send(
-      "Batch code saved to main.bat\nExecuting main.bat\n-----------------------------------------"
-    );
-    var dataToSend;
-    var errorToSend;
-    const batch = spawn("cmd", ["/c", "main.bat"], defaults);
-    batch.stdout.on("data", function (data) {
-      dataToSend = data
-        .toString()
-        .replace(replacer, "******")
-        .replace(/\\externalfiles/g, "");
-    });
-    batch.stderr.on("data", function (data) {
-      errorToSend = data
-        .toString()
-        .replace(replacer, "******")
-        .replace(/\\externalfiles/g, "");
-    });
-    batch.on("close", (code) => {
-      if (dataToSend != undefined) {
-        message.channel.send("```bat\n" + dataToSend + "\n```");
-      }
-      if (errorToSend != undefined) {
-        message.channel.send("```bat\n" + errorToSend + "\n```");
-      }
-    });
-  }
-
-  if (command === "[lua]") {
-    if (maintenance) {
-      working();
-      return;
-    }
-    console.log("lua command triggered.");
-    if (!args.length) {
-      return message.channel.send(
-        "[lua]\n\nCommand [lua] executes lua code and sends back both output and errors to the discord channel.\nExample:\n\n`[lua] l = 10`\nprint(l)\n\nOutput:\n10"
-      );
-    }
-    const luacode = args
-      .slice(0)
-      .join(" ")
-      .replace(replacer2, "")
-      .replace(replacer3, "");
-    fs.writeFileSync("externalfiles/main.lua", luacode, function (err, result) {
-      if (err) console.log("error", err);
-    });
-    message.channel.send(
-      "Lua code saved to main.lua\nExecuting main.lua\n-----------------------------------------"
-    );
-    var dataToSend;
-    var errorToSend;
-    const lua = spawn("lua", ["main.lua"], defaults);
-    lua.stdout.on("data", function (data) {
-      dataToSend = data.toString();
-    });
-    lua.stderr.on("data", function (data) {
-      errorToSend = data.toString().replace(replacer, "******");
-    });
-    lua.on("close", (code) => {
-      if (dataToSend != undefined) {
-        message.channel.send("```lua\n" + dataToSend + "\n```");
-      }
-      if (errorToSend != undefined) {
-        message.channel.send("```lua\n" + errorToSend + "\n```");
-      }
-    });
-  }
-
   if (command === "[go]") {
     if (maintenance) {
       working();
@@ -435,8 +196,8 @@ client.on("message", (message) => {
       .replace(/"runtime"/g, '// "runtime" | Disabled to avoid vulnerabilites')
       .replace(/'os\/exec'/g, "// 'os/exec' | Disabled to avoid vulnerabilites")
       .replace(/'runtime'/g, "// 'runtime' | Disabled to avoid vulnerabilites")
-      .replace(replacer2, "")
-      .replace(replacer3, "");
+      .replace(/..\//g, "")
+      .replace(/..\\/g, "");
     fs.writeFileSync("externalfiles/main.go", gocode, function (err, result) {
       if (err) console.log("error", err);
     });
@@ -450,7 +211,7 @@ client.on("message", (message) => {
       dataToSend = data.toString();
     });
     go.stderr.on("data", function (data) {
-      errorToSend = data.toString().replace(replacer, "******");
+      errorToSend = data.toString().replace(os.userInfo().username, "******");
     });
     go.on("close", (code) => {
       if (dataToSend != undefined) {
@@ -467,7 +228,12 @@ client.on("message", (message) => {
     }
     if (maintenance) {
       maintenance = false;
+      let activityRandom = between(1, 3);
       if (activityRandom == 1) {
+        client.user.setPresence({
+          activity: { name: "with Python", type: "PLAYING" },
+          status: "online",
+        });
         client.user.setPresence({
           activity: { name: "with Python", type: "PLAYING" },
           status: "online",
@@ -477,30 +243,27 @@ client.on("message", (message) => {
           activity: { name: "with Node.JS", type: "PLAYING" },
           status: "online",
         });
+        client.user.setPresence({
+          activity: { name: "with Node.JS", type: "PLAYING" },
+          status: "online",
+        });
       } else if (activityRandom == 3) {
         client.user.setPresence({
           activity: { name: "with GO", type: "PLAYING" },
           status: "online",
         });
-      } else if (activityRandom == 4) {
         client.user.setPresence({
-          activity: { name: "with Bash", type: "PLAYING" },
-          status: "online",
-        });
-      } else if (activityRandom == 5) {
-        client.user.setPresence({
-          activity: { name: "with Lua", type: "PLAYING" },
-          status: "online",
-        });
-      } else if (activityRandom == 6) {
-        client.user.setPresence({
-          activity: { name: "with Batch", type: "PLAYING" },
+          activity: { name: "with GO", type: "PLAYING" },
           status: "online",
         });
       }
       message.channel.send("Maintenance mode has been turned off");
     } else {
       maintenance = true;
+      client.user.setPresence({
+        activity: { name: "Under Maintenance", type: "LISTENING" },
+        status: "dnd",
+      });
       client.user.setPresence({
         activity: { name: "Under Maintenance", type: "LISTENING" },
         status: "dnd",
@@ -520,11 +283,8 @@ client.on("message", (message) => {
         "\n" +
         "Currently supported languages\n--------------------------\n" +
         "`[go]` as Go\n" +
-        "`[node]` as Node.JS /`[npm]` for Node Package Manager\n" +
-        "`[python]` as Python /`[pip]` for Python Package Manager\n" +
-        "`[bash]` as Bash\n" +
-        "`[lua]` as Lua\n" +
-        "`[batch]` as Batch\n"
+        "`[node]` as Node.JS / `[npm]` for Node Package Manager\n" +
+        "`[python]` as Python"
     );
   }
   if (command === "[node]") {
@@ -535,7 +295,7 @@ client.on("message", (message) => {
     console.log("JS command triggered.");
     if (!args.length) {
       return message.channel.send(
-        '[node]\n\nCommand [node] executes node code and sends back both output and errors to the discord channel.\nExample:\n\n`[node] let cool = 10";\nconsole.log(cool);`\n\nOutput:\n10\n\n\n**NOTE:** "require(\'os\')" has been removed to avoid vulnerabilities'
+        '[node]\n\nCommand [node] executes node code and sends back both output and errors to the discord channel.\nExample:\n\n`[node] let cool = 10";\nconsole.log(cool);`\n\nOutput:\n10\n\n\n**NOTE:** "require(\'os\')" and "require(\'fs\')" have been removed to avoid vulnerabilities'
       );
     }
     const nodecode = args
@@ -543,8 +303,8 @@ client.on("message", (message) => {
       .join(" ")
       .replace(/require("os")/g, "'Disabled'")
       .replace(/require('os')/g, "'Disabled'")
-      .replace(replacer2, "")
-      .replace(replacer3, "");
+      .replace(/..\//g, "")
+      .replace(/..\\/g, "");
     fs.writeFile("externalfiles/execute.js", nodecode, function (err, result) {
       if (err) console.log("error", err);
     });
@@ -560,7 +320,7 @@ client.on("message", (message) => {
     nodefile.stderr.on("data", function (data) {
       errorToSend = data
         .toString()
-        .replace(replacer, "******")
+        .replace(os.userInfo().username, "******")
         .replace(/externalfiles\\/g, "");
     });
     nodefile.on("close", (code) => {
@@ -571,94 +331,6 @@ client.on("message", (message) => {
         message.channel.send("```javascript\n" + errorToSend + "\n```");
       }
     });
-  }
-
-  if (command === "[bash]") {
-    if (maintenance) {
-      working();
-      return;
-    }
-    console.log("BASH command triggered.");
-    if (!args.length) {
-      return message.channel.send(
-        '[bash]\n\nCommand [bash] executes bash code and sends back both output and errors to the discord channel.\nExample:\n\n`[bash] bananas="Jello"\necho "$bananas"`\n\nOutput:\nJello\n\n\n'
-      );
-    }
-    const nodecode = args
-      .slice(0)
-      .join(" ")
-      .replace(replacer, "******")
-      .replace(replacer2, "")
-      .replace(replacer3, "")
-      .replace(/cd/g, "");
-    fs.writeFile("externalfiles/main.sh", nodecode, function (err, result) {
-      if (err) console.log("error", err);
-    });
-    message.channel.send(
-      "Bash code saved to main.sh\nExecuting main.sh\n-----------------------------------------"
-    );
-    var dataToSend;
-    var errorToSend;
-    const bashfile = spawn("bash", ["main.sh"], defaults);
-    bashfile.stdout.on("data", function (data) {
-      dataToSend = data.toString();
-    });
-    bashfile.stderr.on("data", function (data) {
-      errorToSend = data
-        .toString()
-        .replace(replacer, "******")
-        .replace(/externalfiles\\/g, "");
-    });
-    bashfile.on("close", (code) => {
-      if (dataToSend != undefined) {
-        message.channel.send("```bash\n" + dataToSend + "\n```");
-      }
-      if (errorToSend != undefined) {
-        message.channel.send("```bash\n" + errorToSend + "\n```");
-      }
-    });
-  }
-  if (command === "[pip]") {
-    if (maintenance) {
-      working();
-      return;
-    }
-    if (!args.length) {
-      return message.channel.send(
-        "[pip]\n\nCommand [pip] is for Python Package Manager which installs and uninstalls packages required for python. \nExample:\n\n`[pip] install requests`\n\nOutput:\nRequirement already satisfied: requests in c:\\python39\\lib\\site-packages (2.25.1)"
-      );
-    }
-    try {
-      const [_, type, pkg] = message.content.split(" ");
-      if (type == "install" || type == "uninstall") {
-      } else {
-        return message.channel.send(
-          "`[CE] Invalid syntax. Example: [pip] <install/uninstall> requests`"
-        );
-      }
-      if (type == "uninstall") {
-        type = "uninstall --yes";
-      }
-      const cmd = "pip " + type + " " + pkg;
-      const child = exec(cmd);
-      child.stdout.on("data", (d) =>
-        message.channel.send(
-          "```python\n" + d.replace(replacer, "******") + "```"
-        )
-      );
-      child.stderr.on("data", (d) =>
-        message.channel.send(
-          "```python\n" + d.replace(replacer, "******") + "```"
-        )
-      );
-      setTimeout((_) => {
-        if (!child.killed) child.kill("SIGKILL");
-      }, 120000);
-    } catch {
-      message.channel.send(
-        "`[CE] Invalid syntax. Example: [pip] <install/uninstall> requests`"
-      );
-    }
   }
   if (command === "[npm]") {
     if (maintenance) {
@@ -681,14 +353,10 @@ client.on("message", (message) => {
       const cmd = "npm --prefix ./externalfiles/ " + type + " " + pkg;
       const child = exec(cmd);
       child.stdout.on("data", (d) =>
-        message.channel.send(
-          "```javascript\n" + d.replace(replacer, "******") + "```"
-        )
+        message.channel.send("```javascript\n" + d + "```")
       );
       child.stderr.on("data", (d) =>
-        message.channel.send(
-          "```javascript\n" + d.replace(replacer, "******") + "```"
-        )
+        message.channel.send("```javascript\n" + d + "```")
       );
       setTimeout((_) => {
         if (!child.killed) child.kill("SIGKILL");
@@ -714,8 +382,8 @@ client.on("message", (message) => {
       .slice(0)
       .join(" ")
       .replace(/import os/g, "# import os | Disabled to prevent exploits")
-      .replace(replacer2, "")
-      .replace(replacer3, "");
+      .replace(/..\//g, "")
+      .replace(/..\\/g, "");
     fs.writeFile("externalfiles/main.py", pythoncode, function (err, result) {
       if (err) console.log("error", err);
     });
@@ -729,7 +397,7 @@ client.on("message", (message) => {
       dataToSend = data.toString();
     });
     python.stderr.on("data", function (data) {
-      errorToSend = data.toString().replace(replacer, "******");
+      errorToSend = data.toString().replace(os.userInfo().username, "******");
     });
     python.on("close", (code) => {
       console.log(dataToSend + "\n" + errorToSend);
